@@ -25,7 +25,7 @@ SECRET_KEY = 'SECRET-KEY'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['djadmin@gaw.sh']
+ALLOWED_HOSTS = ['djadmin.gaw.sh']
 
 ADMINS = MANAGERS = (("Eric OC", "eric@ericoc.com"),)
 
