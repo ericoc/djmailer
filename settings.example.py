@@ -60,8 +60,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-AUTH_USER_MODEL = "users.User"
-AUTHENTICATION_BACKENDS = ("users.backends.UserAuthBackend",)
+AUTH_USER_MODEL = "users.WidgetUser"
+AUTHENTICATION_BACKENDS = ("users.backends.WidgetUserAuthBackend",)
 
 ROOT_URLCONF = 'urls'
 SITE_TITLE = 'DJAdmin'
