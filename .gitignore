@@ -1,0 +1,12 @@
+.*
+!.gitignore
+*~
+*.csv
+*.log
+*.pyc
+*.save
+*.sql
+*.sqlite3
+settings.py
+venv
+/static/
