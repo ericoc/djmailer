@@ -3,7 +3,7 @@ from django.contrib import admin, messages
 from django.utils.timezone import now
 from django.utils.translation import ngettext
 from django_mail_admin import mail
-from django_mail_admin.models import PRIORITY, TemplateVariable, OutgoingEmail
+from django_mail_admin.models import PRIORITY
 
 from .comment import WidgetCommentInlineAdmin
 from ..models.widget import Widget
@@ -71,7 +71,7 @@ class WidgetAdmin(admin.ModelAdmin):
 
     @admin.action(
         description=(
-                f"E-mail status of selected {model._meta.verbose_name_plural}"
+            f"E-mail status of selected {model._meta.verbose_name_plural}"
         )
     )
     def mail_status(modeladmin, request, queryset):
@@ -80,7 +80,7 @@ class WidgetAdmin(admin.ModelAdmin):
             for obj in queryset:
                 if obj and obj.active and obj.email and obj.template:
                     mail.send(
-                        sender=settings.ADMINS[0][1],
+                        sender=settings.DEFAULT_FROM_EMAIL,
                         recipients=obj.email,
                         template=obj.template,
                         priority=PRIORITY.now,
