@@ -2,8 +2,8 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.utils.timezone import now
 from django.utils.translation import ngettext
-from django_mail_admin import mail
-from django_mail_admin.models import PRIORITY
+from django_mail_admin_mod import mail
+from django_mail_admin_mod.models import TemplateVariable, OutgoingEmail
 
 from .comment import WidgetCommentInlineAdmin
 from ..models.widget import Widget
@@ -71,7 +71,7 @@ class WidgetAdmin(admin.ModelAdmin):
 
     @admin.action(
         description=(
-            f"E-mail status of selected {model._meta.verbose_name_plural}"
+                f"E-mail status of selected {model._meta.verbose_name_plural}"
         )
     )
     def mail_status(modeladmin, request, queryset):
@@ -79,22 +79,28 @@ class WidgetAdmin(admin.ModelAdmin):
         if queryset:
             for obj in queryset:
                 if obj and obj.active and obj.email and obj.template:
-                    mail.send(
+                    email = mail.create(
                         sender=settings.DEFAULT_FROM_EMAIL,
                         recipients=obj.email,
                         template=obj.template,
-                        priority=PRIORITY.now,
-                        variable_dict={
-                            "NAME": obj.name,
-                            "DESCRIPTION": obj.description,
-                            "ACTIVE": obj.active,
-                            "AUTHOR_NAME": (
-                                obj.updated_by.get_short_name() or
-                                obj.created_by.get_short_name()
-                            ),
-                            "AUTHOR_DATE": obj.updated_at or obj.created_at
-                        }
                     )
+                    template_values = (
+                        ("NAME", obj.name),
+                        ("DESCRIPTION", obj.description),
+                        ("ACTIVE", obj.active),
+                        ("AUTHOR_NAME",
+                            (obj.updated_by.get_short_name() or
+                             obj.created_by.get_short_name())
+                        ),
+                        ("AUTHOR_DATE", obj.updated_at or obj.created_at)
+                    )
+                    for (template_var, actual_var) in template_values:
+                        TemplateVariable.objects.create(
+                            name=template_var,
+                            value=actual_var,
+                            email=email
+                        )
+                    OutgoingEmail.objects.get(id=email.id).dispatch()
                     sent += 1
 
         messages.add_message(

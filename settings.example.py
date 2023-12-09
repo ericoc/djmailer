@@ -29,6 +29,7 @@ ALLOWED_HOSTS = ['djadmin.gaw.sh']
 
 ADMINS = MANAGERS = (("Eric OC", "eric@ericoc.com"),)
 
+EMAIL_BACKEND = 'django_mail_admin_mod.backends.OutboxEmailBackend'
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
 DEFAULT_FROM_EMAIL = SERVER_EMAIL = "djadmin@gaw.sh"
