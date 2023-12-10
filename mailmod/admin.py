@@ -10,7 +10,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from .models import (
-    TemplateVariable, OutgoingEmail, Outbox, EmailTemplate, STATUS, Log,
+    TemplateVariable, OutgoingEmail, EmailTemplate, STATUS, Log,
     Attachment
 )
 from .fields import CommaSeparatedEmailField
@@ -138,7 +138,10 @@ class LogInline(admin.TabularInline):
 
 class OutgoingEmailAdmin(admin.ModelAdmin):
     inlines = (TemplateVariableInline, AttachmentInline, LogInline)
-    list_display = ['id', 'to_display', 'subject', 'template', 'from_email', 'status', 'scheduled_time', 'priority']
+    list_display = [
+        'id', 'to_display', 'subject', 'template', 'from_email', 'status',
+        'scheduled_time', 'priority'
+    ]
     formfield_overrides = {
         CommaSeparatedEmailField: {'widget': CommaSeparatedEmailWidget}
     }
@@ -151,37 +154,25 @@ class OutgoingEmailAdmin(admin.ModelAdmin):
     to_display.short_description = _('To')
 
     def get_form(self, request, obj=None, **kwargs):
-        # Try to get active Outbox and prepopulate from_email field
         form = super(OutgoingEmailAdmin, self).get_form(request, obj, **kwargs)
-        configurations = Outbox.objects.filter(active=True)
-        if not (len(configurations) > 1 or len(configurations) == 0):
-            form.base_fields['from_email'].initial = configurations.first().email_host_user
         return form
 
     def save_model(self, request, obj, form, change):
         super(OutgoingEmailAdmin, self).save_model(request, obj, form, change)
-        # If we have an email to reply to, specify replied headers
-        # TODO: add setting to only queue emails after pressing a button/etc.
         obj.queue()
 
 
 class AttachmentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'file',)
-
-
-class OutboxAdmin(admin.ModelAdmin):
-    list_display = ('name', 'email_host', 'email_host_user', 'email_port', 'id', 'active')
-    list_filter = ('active',)
+    list_display = ('name', 'file')
 
 
 class LogAdmin(admin.ModelAdmin):
     list_display = ('email', 'status', 'date', 'message')
 
 
-if getattr(settings, 'DJANGO_MAILADMIN_ADMIN_ENABLED', True):
+if getattr(settings, 'MAILMOD_ENABLED', True):
     admin.site.register(EmailTemplate, EmailTemplateAdmin)
     # Without this attachment inline won't have add/edit buttons
     admin.site.register(Attachment, AttachmentAdmin)
     admin.site.register(OutgoingEmail, OutgoingEmailAdmin)
-    admin.site.register(Outbox, OutboxAdmin)
     admin.site.register(Log, LogAdmin)

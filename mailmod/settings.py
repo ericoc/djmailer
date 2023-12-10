@@ -53,7 +53,9 @@ def get_available_backends():
 
 
 def get_backend_names_str():
-    return _('Available backends are: ') + str(list(get_available_backends().keys()))
+    return _('Available backends are: ') + str(
+        list(get_available_backends().keys())
+    )
 
 
 def get_cache_backend():
