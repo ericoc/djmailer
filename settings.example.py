@@ -29,7 +29,7 @@ ALLOWED_HOSTS = ['djadmin.gaw.sh']
 
 ADMINS = MANAGERS = (("Eric OC", "eric@ericoc.com"),)
 
-EMAIL_BACKEND = 'mailmod.backends.CustomEmailBackend'
+EMAIL_BACKEND = 'mailmod.backends.OutboxEmailBackend'
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
 DEFAULT_FROM_EMAIL = SERVER_EMAIL = "djadmin@gaw.sh"
