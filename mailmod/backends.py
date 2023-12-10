@@ -14,14 +14,19 @@ logger = logging.getLogger(__name__)
 
 class CustomEmailBackend(EmailBackend):
     def __init__(
-        self, host=None, port=None, username=None, password=None,
-        fail_silently=False, **kwargs
+        self,
+        host=settings.EMAIL_HOST or 'localhost',
+        port=settings.EMAIL_PORT or 25,
+        username=None,
+        password=None,
+        fail_silently=False,
+        **kwargs
     ):
         super(CustomEmailBackend, self).__init__(fail_silently=fail_silently)
         self.host = host or settings.EMAIL_HOST or 'localhost'
         self.port = port or settings.EMAIL_PORT or 25
-        self.username = username or settings.EMAIL_USERNAME or None
-        self.password = password or settings.EMAIL_PASSWORD or None
+        self.username = username or None
+        self.password = password or None
         self.connection = None
         self._lock = threading.RLock()
 
