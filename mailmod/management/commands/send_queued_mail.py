@@ -11,9 +11,8 @@ from ...logutils import setup_loghandlers
 from ...mail import send_queued
 from ...models import OutgoingEmail, STATUS
 
-
 logger = setup_loghandlers()
-default_lockfile = tempfile.gettempdir() + "/django_mail_admin"
+default_lockfile = tempfile.gettempdir() + "/mailmod"
 
 
 class Command(BaseCommand):
@@ -36,10 +35,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        logger.info(
-            'Acquiring lock for sending queued emails at %s.lock' %
-            options['lockfile']
-        )
+        logger.info('Acquiring lock for sending queued emails at %s.lock' %
+                    options['lockfile'])
         try:
             with FileLock(options['lockfile']):
 
@@ -55,11 +52,8 @@ class Command(BaseCommand):
                     # Close DB connection to avoid multiprocessing errors
                     connection.close()
 
-                    if not OutgoingEmail.objects.filter(
-                        status=STATUS.queued
-                    ).filter(
-                        Q(scheduled_time__lte=now()) | Q(scheduled_time=None)
-                    ).exists():
+                    if not OutgoingEmail.objects.filter(status=STATUS.queued) \
+                        .filter(Q(scheduled_time__lte=now()) | Q(scheduled_time=None)).exists():
                         break
         except FileLocked:
             logger.info('Failed to acquire lock, terminating now.')

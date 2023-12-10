@@ -2,7 +2,6 @@ from django.template.defaultfilters import slugify
 
 from .settings import get_cache_backend
 
-
 # Stripped down version of caching functions from django-dbtemplates
 # https://github.com/jezdez/django-dbtemplates/blob/develop/dbtemplates/utils/cache.py
 cache_backend = get_cache_backend()
@@ -13,7 +12,7 @@ def get_cache_key(name):
     Prefixes and slugify the key name
     """
     # TODO: add possibility to specify custom cache key to settings
-    return 'django_mail_admin:template:%s' % (slugify(name))
+    return 'mailmod:template:%s' % (slugify(name))
 
 
 def set(name, content):

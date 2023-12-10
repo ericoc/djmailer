@@ -30,7 +30,7 @@ class CommaSeparatedEmailField(TextField):
         or list of email addresses is supplied as arguments. For example:
 
         - OutgoingEmail.objects.filter(to='mail@example.com')
-        - OutgoingEmail.objects.filter(to=['one@example.com','two@example.com'])
+        - OutgoingEmail.objects.filter(to=['one@example.com', 'two@example.com'])
         """
         if isinstance(value, str):
             return value

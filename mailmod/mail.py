@@ -8,15 +8,12 @@ from django.utils.timezone import now
 
 from .connections import connections
 from .logutils import setup_loghandlers
-from .models import (
-    OutgoingEmail, Log, PRIORITY, STATUS, create_attachments, TemplateVariable
-)
-from .settings import (
-    get_available_backends, get_batch_size, get_log_level, get_sending_order,
-    get_threads_per_process
-)
+from .models import OutgoingEmail, Log, PRIORITY, STATUS, create_attachments, TemplateVariable
+from .settings import (get_available_backends, get_batch_size,
+                       get_log_level, get_sending_order, get_threads_per_process)
 from .signals import email_queued
-from .utils import parse_emails, parse_priority, split_emails
+from .utils import (parse_emails, parse_priority,
+                    split_emails)
 
 logger = setup_loghandlers("INFO")
 
@@ -71,8 +68,7 @@ def send(sender, recipients=None, template=None, subject='',
     Creates an email with appropriate status and queues it if needed
     Adds attachments if they are passed
     Dispatches the email if it has PRIORITY.now or leaves for send_queued
-    If the email is dispatched, it is rendered with a template and then sent
-    through django Email model
+    If the email is dispatched, it is rendered with a template and then sent through django Email model
     Then the result is logged into Log model
     """
     try:
@@ -103,27 +99,18 @@ def send(sender, recipients=None, template=None, subject='',
 
     if template:
         if subject:
-            raise ValueError(
-                'You can\'t specify both "template" and "subject" arguments'
-            )
+            raise ValueError('You can\'t specify both "template" and "subject" arguments')
         if message:
-            raise ValueError(
-                'You can\'t specify both "template" and "message" arguments'
-            )
+            raise ValueError('You can\'t specify both "template" and "message" arguments')
         if html_message:
-            raise ValueError(
-                'You can\'t specify both "template" and'
-                ' "html_message" arguments'
-            )
+            raise ValueError('You can\'t specify both "template" and "html_message" arguments')
 
     if backend and backend not in get_available_backends().keys():
         raise ValueError('%s is not a valid backend alias' % backend)
 
-    email = create(
-        sender, recipients, cc, bcc, subject, message, html_message,
-        scheduled_time, headers, template, priority, commit=commit,
-        backend=backend
-    )
+    email = create(sender, recipients, cc, bcc,
+                   subject, message, html_message, scheduled_time, headers, template,
+                   priority, commit=commit, backend=backend)
 
     if variable_dict:
         variables = []
@@ -160,21 +147,10 @@ def get_queued():
      - Status is queued
      - Has scheduled_time lower than the current time or None
     """
-    return OutgoingEmail.objects.filter(
-        status=STATUS.queued
-    ).select_related(
-        'template'
-    ).filter(
-        Q(
-            scheduled_time__lte=now()
-        ) | Q(
-            scheduled_time=None
-        )
-    ).order_by(
-        *get_sending_order()
-    ).prefetch_related(
-        'attachments'
-    )[:get_batch_size()]
+    return OutgoingEmail.objects.filter(status=STATUS.queued) \
+               .select_related('template') \
+               .filter(Q(scheduled_time__lte=now()) | Q(scheduled_time=None)) \
+               .order_by(*get_sending_order()).prefetch_related('attachments')[:get_batch_size()]
 
 
 def send_queued(processes=1, log_level=None):
@@ -198,11 +174,9 @@ def send_queued(processes=1, log_level=None):
             processes = total_email
 
         if processes == 1:
-            total_sent, total_failed = _send_bulk(
-                queued_emails,
-                uses_multiprocessing=False,
-                log_level=log_level
-            )
+            total_sent, total_failed = _send_bulk(queued_emails,
+                                                  uses_multiprocessing=False,
+                                                  log_level=log_level)
         else:
             email_lists = split_emails(queued_emails, processes)
 

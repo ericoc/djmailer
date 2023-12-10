@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.validators import MinLengthValidator, MaxLengthValidator
 from django.db import models
-from django_mail_admin_mod.models.templates import EmailTemplate
+from mailmod.models.templates import EmailTemplate
 
 
 class Widget(models.Model):

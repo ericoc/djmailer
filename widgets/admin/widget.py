@@ -2,8 +2,8 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.utils.timezone import now
 from django.utils.translation import ngettext
-from django_mail_admin_mod import mail
-from django_mail_admin_mod.models import TemplateVariable, OutgoingEmail
+from mailmod import mail
+from mailmod.models import TemplateVariable
 
 from .comment import WidgetCommentInlineAdmin
 from ..models.widget import Widget
@@ -61,8 +61,10 @@ class WidgetAdmin(admin.ModelAdmin):
         self.message_user(
             request,
             ngettext(
-                f"%d {self.model._meta.verbose_name} was successfully deactivated.",
-                f"%d {self.model._meta.verbose_name_plural} were successfully deactivated.",
+                (f"%d {self.model._meta.verbose_name}"
+                 f" was successfully deactivated."),
+                (f"%d {self.model._meta.verbose_name_plural}"
+                 f" were successfully deactivated."),
                 deactivated,
             )
             % deactivated,
@@ -70,12 +72,12 @@ class WidgetAdmin(admin.ModelAdmin):
         )
 
     @admin.action(
-        description=(
-                f"E-mail status of selected {model._meta.verbose_name_plural}"
+        description="Queue e-mail of the status of selected %s" % (
+            model._meta.verbose_name_plural
         )
     )
     def mail_status(modeladmin, request, queryset):
-        sent = 0
+        queued = 0
         if queryset:
             for obj in queryset:
                 if obj and obj.active and obj.email and obj.template:
@@ -86,13 +88,6 @@ class WidgetAdmin(admin.ModelAdmin):
                     )
                     template_values = (
                         ("NAME", obj.name),
-                        ("DESCRIPTION", obj.description),
-                        ("ACTIVE", obj.active),
-                        ("AUTHOR_NAME",
-                            (obj.updated_by.get_short_name() or
-                             obj.created_by.get_short_name())
-                        ),
-                        ("AUTHOR_DATE", obj.updated_at or obj.created_at)
                     )
                     for (template_var, actual_var) in template_values:
                         TemplateVariable.objects.create(
@@ -100,19 +95,18 @@ class WidgetAdmin(admin.ModelAdmin):
                             value=actual_var,
                             email=email
                         )
-                    OutgoingEmail.objects.get(id=email.id).dispatch()
-                    sent += 1
+                    queued += 1
 
         messages.add_message(
             request=request,
             level=messages.SUCCESS,
             message=(
                 ngettext(
-                    f"%d e-mail has been sent.",
-                    f"%d e-mails have been sent.",
-                    sent,
+                    f"%d e-mail has been queued.",
+                    f"%d e-mails have been queued.",
+                    queued,
                 )
-                % sent
+                % queued
             )
         )
 

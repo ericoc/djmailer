@@ -7,7 +7,7 @@
 *.save
 *.sql
 *.sqlite3
-settings.py
+/settings.py
 venv
 /static/
 /media/

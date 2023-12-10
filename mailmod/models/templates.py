@@ -11,18 +11,18 @@ logger = logging.getLogger(__name__)
 
 # TODO: implement cache usage as in post_office
 class EmailTemplate(models.Model):
-    # TODO: add description about vars available
+    # TODO: add description about vars availiable
     class Meta:
-        verbose_name = _('Email Template')
-        verbose_name_plural = _('Email Templates')
+        verbose_name = _('Email template')
+        verbose_name_plural = _('Email templates')
 
     name = models.CharField(
-        verbose_name=_("Template Name"),
+        verbose_name=_("Template name"),
         max_length=254
     )
 
     description = models.TextField(
-        verbose_name=_("Template Description"),
+        verbose_name=_("Template description"),
         blank=True
     )
 
@@ -34,7 +34,7 @@ class EmailTemplate(models.Model):
     )
 
     email_html_text = models.TextField(
-        verbose_name=_("Email HTML Text"),
+        verbose_name=_("Email html text"),
         blank=True,
         validators=[validate_template_syntax]
     )
@@ -53,24 +53,24 @@ class EmailTemplate(models.Model):
 
 class TemplateVariable(models.Model):
     class Meta:
-        verbose_name = _("Template Variable")
-        verbose_name_plural = _("Template Variables")
+        verbose_name = _("Template variable")
+        verbose_name_plural = _("Template variables")
 
     email = models.ForeignKey(
-        to='OutgoingEmail',
+        'OutgoingEmail',
         null=True,
         blank=True,
         on_delete=models.CASCADE
     )
 
     name = models.CharField(
-        verbose_name=_("Variable Name"),
+        verbose_name=_("Variable name"),
         max_length=254,
         blank=False
     )
 
     value = models.TextField(
-        verbose_name=_("Variable Value"),
+        verbose_name=_("Variable value"),
         blank=True
     )
 

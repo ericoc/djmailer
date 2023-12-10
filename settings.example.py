@@ -29,7 +29,7 @@ ALLOWED_HOSTS = ['djadmin.gaw.sh']
 
 ADMINS = MANAGERS = (("Eric OC", "eric@ericoc.com"),)
 
-EMAIL_BACKEND = 'django_mail_admin_mod.backends.OutboxEmailBackend'
+EMAIL_BACKEND = 'mailmod.backends.CustomEmailBackend'
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
 DEFAULT_FROM_EMAIL = SERVER_EMAIL = "djadmin@gaw.sh"
@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_mail_admin',
+    'mailmod',
     'core',
     'users',
     'widgets'

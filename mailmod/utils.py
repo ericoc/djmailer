@@ -6,26 +6,13 @@ from collections import namedtuple
 
 from django.core.exceptions import ValidationError
 
-from .settings import (
-    get_default_priority, get_default_charset, get_attachment_upload_to
-)
+from .settings import get_default_priority, get_default_charset, get_attachment_upload_to
 from .validators import validate_email_with_name
-
 
 logger = logging.getLogger(__name__)
 
-PRIORITY = namedtuple(
-    typename='PRIORITY',
-    field_names='low medium high now'
-)._make(
-    range(4)
-)
-STATUS = namedtuple(
-    typename='STATUS',
-    field_names='sent failed queued'
-)._make(
-    range(3)
-)
+PRIORITY = namedtuple('PRIORITY', 'low medium high now')._make(range(4))
+STATUS = namedtuple('STATUS', 'sent failed queued')._make(range(3))
 
 
 def convert_header_to_unicode(header):

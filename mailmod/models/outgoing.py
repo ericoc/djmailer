@@ -3,7 +3,7 @@ import logging
 from django.core.files import File
 from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.db import models
-from django.template import Template, Context
+from django.template import Context
 from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 from jsonfield import JSONField
@@ -20,38 +20,33 @@ logger = logging.getLogger(__name__)
 
 
 class OutgoingEmail(models.Model):
-    PRIORITY_CHOICES = [
-        (PRIORITY.low, _("low")),
-        (PRIORITY.medium, _("medium")),
-        (PRIORITY.high, _("high")),
-        (PRIORITY.now, _("now"))
-    ]
-    STATUS_CHOICES = [
-        (STATUS.sent, _("sent")),
-        (STATUS.failed, _("failed")),
-        (STATUS.queued, _("queued"))
-    ]
+    PRIORITY_CHOICES = [(PRIORITY.low, _("low")), (PRIORITY.medium, _("medium")),
+                        (PRIORITY.high, _("high")), (PRIORITY.now, _("now"))]
+    STATUS_CHOICES = [(STATUS.sent, _("sent")), (STATUS.failed, _("failed")),
+                      (STATUS.queued, _("queued"))]
 
     class Meta:
-        verbose_name = _("Outgoing E-mail")
-        verbose_name_plural = _("Outgoing E-mails")
+        verbose_name = _("Outgoing email")
+        verbose_name_plural = _("Outgoing emails")
 
     from_email = models.CharField(
-        verbose_name=_("From E-mail Address"),
+        verbose_name=_("From email"),
         max_length=254,
         validators=[validate_email_with_name]
     )
-    to = CommaSeparatedEmailField(_("To E-mail Address(es)"))
-    cc = CommaSeparatedEmailField(_("CC"))
-    bcc = CommaSeparatedEmailField(_("BCC"))
+
+    to = CommaSeparatedEmailField(_("To email(s)"))
+    cc = CommaSeparatedEmailField(_("Cc"))
+    bcc = CommaSeparatedEmailField(_("Bcc"))
+
     template = models.ForeignKey(
-        to=EmailTemplate,
+        EmailTemplate,
         verbose_name=_("Template"),
         null=True,
         blank=True,
         help_text=_(
-            "If template is selected, HTML message and subject fields will"
-            " not be used - they will be populated from template"
+            "If template is selected, HTML message and subject fields will not"
+            "be used - they will be populated from template"
         ),
         on_delete=models.CASCADE
     )
@@ -61,45 +56,34 @@ class OutgoingEmail(models.Model):
         blank=True
     )
     message = models.TextField(_("Message"), blank=True)
+
     html_message = models.TextField(
         verbose_name=_("HTML Message"),
         blank=True,
-        help_text=_("Used only if template is not selected.")
+        help_text=_("Used only if template is not selected")
     )
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     last_updated = models.DateTimeField(db_index=True, auto_now=True)
-    scheduled_time = models.DateTimeField(
-        verbose_name=_('Scheduled Send Time'),
-        blank=True,
-        null=True,
-        db_index=True
-    )
-    headers = JSONField(
-        verbose_name=_('Headers'),
-        blank=True,
-        null=True
-    )
+    scheduled_time = models.DateTimeField(_('The scheduled sending time'),
+                                          blank=True, null=True, db_index=True)
+    headers = JSONField(_('Headers'), blank=True, null=True)
+
     status = models.PositiveSmallIntegerField(
-        verbose_name=_("Status"),
+        _("Status"),
         choices=STATUS_CHOICES, db_index=True,
         blank=True, null=True)
-    priority = models.PositiveSmallIntegerField(
-        verbose_name=_("Priority"),
-        choices=PRIORITY_CHOICES,
-        blank=True,
-        null=True
-    )
+    priority = models.PositiveSmallIntegerField(_("Priority"),
+                                                choices=PRIORITY_CHOICES,
+                                                blank=True, null=True)
+
     send_now = models.BooleanField(
-        verbose_name=_("Send Now"),
+        verbose_name=_("Send now"),
         default=False
     )
-    backend_alias = models.CharField(
-        verbose_name=_('Backend Alias'),
-        blank=True,
-        default='',
-        help_text=get_backend_names_str,
-        max_length=64
-    )
+
+    backend_alias = models.CharField(_('Backend alias'), blank=True, default='',
+                                     help_text=get_backend_names_str,
+                                     max_length=64)
 
     def __init__(self, *args, **kwargs):
         super(OutgoingEmail, self).__init__(*args, **kwargs)
@@ -109,6 +93,7 @@ class OutgoingEmail(models.Model):
         context = {}
         for var in self.templatevariable_set.all().filter(email=self):
             context[var.name] = var.value
+
         return Context(context)
 
     def email_message(self):
@@ -149,11 +134,7 @@ class OutgoingEmail(models.Model):
                 headers=self.headers, connection=connection)
 
         for attachment in self.attachments.all():
-            msg.attach(
-                attachment.name,
-                attachment.file.read(),
-                mimetype=attachment.mimetype or None
-            )
+            msg.attach(attachment.name, attachment.file.read(), mimetype=attachment.mimetype or None)
             attachment.file.close()
 
         self._cached_email_message = msg
@@ -182,10 +163,7 @@ class OutgoingEmail(models.Model):
             message = str(e)
             exception_type = type(e).__name__
             if email_message:
-                email_failed_to_send.send(
-                    sender=self,
-                    outgoing_email=email_message
-                )
+                email_failed_to_send.send(sender=self, outgoing_email=email_message)
             # If run in a bulk sending mode, reraise and let the outer
             # layer handle the exception
             if not commit:
@@ -213,31 +191,17 @@ class OutgoingEmail(models.Model):
         super(OutgoingEmail, self).save(*args, **kwargs)
 
     def __str__(self):
-        return (
-            str(self.from_email) + " -> " + str(self.to) +
-            " (" + self.subject + ")"
-        )
+        return str(self.from_email) + " -> " + str(self.to) + " (" + self.subject + ")"
 
 
 class Attachment(models.Model):
     """
     A model describing an email attachment.
     """
-    file = models.FileField(
-        verbose_name=_('File'),
-        upload_to=get_attachment_save_path
-    )
-    name = models.CharField(
-        verbose_name=_('Name'),
-        max_length=255,
-        help_text=_("The original filename.")
-    )
-    emails = models.ManyToManyField(
-        to=OutgoingEmail,
-        related_name='attachments',
-        blank=True,
-        verbose_name=_('Email addresses')
-    )
+    file = models.FileField(_('File'), upload_to=get_attachment_save_path)
+    name = models.CharField(_('Name'), max_length=255, help_text=_("The original filename"))
+    emails = models.ManyToManyField(OutgoingEmail, related_name='attachments', blank=True,
+                                    verbose_name=_('Email addresses'))
     mimetype = models.CharField(max_length=255, default='', blank=True)
 
     class Meta:
@@ -254,9 +218,7 @@ def create_attachments(attachment_files):
 
     attachment_files is a dict of:
         * Key - the filename to be used for the attachment.
-        * Value - file-like object,
-            or a filename to open OR a dict of
-                {'file': file-like-object, 'mimetype': string}
+        * Value - file-like object, or a filename to open OR a dict of {'file': file-like-object, 'mimetype': string}
 
     Returns a list of Attachment objects
     """
@@ -305,8 +267,7 @@ def send_mail(subject, message, from_email, recipient_list, html_message='',
             OutgoingEmail.objects.create(
                 from_email=from_email, to=address, subject=subject,
                 message=message, html_message=html_message, status=status,
-                headers=headers, priority=priority,
-                scheduled_time=scheduled_time
+                headers=headers, priority=priority, scheduled_time=scheduled_time
             )
         )
     if priority == PRIORITY.now:

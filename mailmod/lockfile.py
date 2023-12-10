@@ -115,18 +115,14 @@ class FileLock(object):
         atomic operation across platforms.
         """
 
-        pid_file = os.open(
-            self.pid_filename,
-            os.O_CREAT | os.O_EXCL | os.O_RDWR
-        )
+        pid_file = os.open(self.pid_filename, os.O_CREAT | os.O_EXCL | os.O_RDWR)
         os.write(pid_file, str(os.getpid()).encode('utf-8'))
         os.close(pid_file)
 
         if hasattr(os, 'symlink'):
             os.symlink(self.pid_filename, self.lock_filename)
         else:
-            # Windows platforms doesn't support symlinks,
-            #   at least not through the os API
+            # Windows platforms doesn't support symlinks, at least not through the os API
             self.lock_filename = self.pid_filename
 
     def release(self):

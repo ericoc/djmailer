@@ -16,8 +16,8 @@ from .models import (
 from .fields import CommaSeparatedEmailField
 from .forms import OutgoingEmailAdminForm
 
-
 logger = logging.getLogger(__name__)
+
 
 # Admin row actions
 if 'django_admin_row_actions' in settings.INSTALLED_APPS:
@@ -33,8 +33,7 @@ else:
 
 def get_parent():
     """
-    Optionally adds AdminRowActionsMixin to admin.ModelAdmin
-    if django_admin_row_actions is installed
+    Optionally adds AdminRowActionsMixin to admin.ModelAdmin if django_admin_row_actions is installed
     :return: class to inherit from
     """
     if admin_row_actions:
@@ -63,20 +62,15 @@ class EmailTemplateAdmin(admin.ModelAdmin):
 
     def preview_template_field(self, o):
         if o.id:
-            url = reverse(
-                viewname='admin:django_mail_admin_mod_emailtemplate_change',
-                kwargs={'object_id': o.pk}
-            )
+            url = reverse('admin:mailmod_emailtemplate_change', kwargs={'object_id': o.pk})
             url = url + '?preview_template=true'
-            return mark_safe(
-                f'<a href="{url}" target="_blank">Preview this template</a>'
-            )
+            return mark_safe(f'<a href="{url}" target="_blank">Preview this template</a>')
         else:
             return '---'
-    preview_template_field.short_description = 'Preview'
+    preview_template_field.short_description='Preview'
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
-        if request.GET.get('preview_template', '').lower() == 'true':
+        if request.GET.get('preview_template', '').lower()=='true':
             return self.preview_template_view(request, object_id)
         return super().change_view(request, object_id, form_url, extra_context)
 
@@ -144,16 +138,7 @@ class LogInline(admin.TabularInline):
 
 class OutgoingEmailAdmin(admin.ModelAdmin):
     inlines = (TemplateVariableInline, AttachmentInline, LogInline)
-    list_display = [
-        'id',
-        'to_display',
-        'subject',
-        'template',
-        'from_email',
-        'status',
-        'scheduled_time',
-        'priority'
-    ]
+    list_display = ['id', 'to_display', 'subject', 'template', 'from_email', 'status', 'scheduled_time', 'priority']
     formfield_overrides = {
         CommaSeparatedEmailField: {'widget': CommaSeparatedEmailWidget}
     }
@@ -170,22 +155,12 @@ class OutgoingEmailAdmin(admin.ModelAdmin):
         form = super(OutgoingEmailAdmin, self).get_form(request, obj, **kwargs)
         configurations = Outbox.objects.filter(active=True)
         if not (len(configurations) > 1 or len(configurations) == 0):
-            form.base_fields['from_email'].initial = (
-                configurations.first().email_host_user
-            )
+            form.base_fields['from_email'].initial = configurations.first().email_host_user
         return form
 
     def save_model(self, request, obj, form, change):
         super(OutgoingEmailAdmin, self).save_model(request, obj, form, change)
         # If we have an email to reply to, specify replied headers
-        if form.cleaned_data['reply']:
-            if not obj.headers:
-                obj.headers = {}
-
-            obj.headers.update(
-                form.cleaned_data['reply'].get_reply_headers(obj.headers)
-            )
-            obj.save()
         # TODO: add setting to only queue emails after pressing a button/etc.
         obj.queue()
 
@@ -195,9 +170,7 @@ class AttachmentAdmin(admin.ModelAdmin):
 
 
 class OutboxAdmin(admin.ModelAdmin):
-    list_display = (
-        'name', 'email_host', 'email_host_user', 'email_port', 'id', 'active'
-    )
+    list_display = ('name', 'email_host', 'email_host_user', 'email_port', 'id', 'active')
     list_filter = ('active',)
 
 
