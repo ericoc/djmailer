@@ -27,13 +27,13 @@ class WidgetAdmin(admin.ModelAdmin):
         }),
     )
     inlines = (WidgetCommentInlineAdmin,)
-    list_display = ("name", "active",)
+    list_display = ("name", "active", "email",)
     list_filter = (
         "active",
         ("created_by", admin.RelatedOnlyFieldListFilter),
         ("updated_by", admin.RelatedOnlyFieldListFilter)
     )
-    search_fields = ("name", "description", "created_by", "updated_by")
+    search_fields = ("name", "description", "email", "created_by", "updated_by")
     readonly_fields = ("created_at", "created_by", "updated_at", "updated_by")
 
     def get_urls(self):
@@ -46,15 +46,25 @@ class WidgetAdmin(admin.ModelAdmin):
 
     def activate_all(self, request):
         self.model.objects.all().update(active=True)
-        self.message_user(request,"All widgets have been activated.")
+        self.message_user(
+            request=request,
+            message=(
+                f"All {self.model._meta.verbose_name_plural}"
+                " have been activated."
+            ),
+            level=messages.WARNING
+        )
         return HttpResponseRedirect("..")
 
     def deactivate_all(self, request):
         self.model.objects.all().update(active=False)
         self.message_user(
-            request,
-            "All widgets have been deactivated.",
-            messages.WARNING
+            request=request,
+            message=(
+                f"All {self.model._meta.verbose_name_plural}"
+                " have been deactivated."
+            ),
+            level=messages.WARNING
         )
         return HttpResponseRedirect("..")
 
@@ -66,8 +76,14 @@ class WidgetAdmin(admin.ModelAdmin):
         self.message_user(
             request,
             ngettext(
-                "%d widget was successfully activated.",
-                "%d widgets were successfully activated.",
+                (
+                    f"%d {self.model._meta.verbose_name}"
+                    " was successfully activated."
+                ),
+                (
+                    f"%d {self.model._meta.verbose_name_plural}"
+                    " were successfully activated."
+                ),
                 activated,
             )
             % activated,
@@ -82,10 +98,14 @@ class WidgetAdmin(admin.ModelAdmin):
         self.message_user(
             request,
             ngettext(
-                (f"%d {self.model._meta.verbose_name}"
-                 " was successfully deactivated."),
-                (f"%d {self.model._meta.verbose_name_plural}"
-                 " were successfully deactivated."),
+                (
+                    "%d {self.model._meta.verbose_name}"
+                    " was successfully deactivated."
+                ),
+                (
+                    f"%d {self.model._meta.verbose_name_plural}"
+                    " were successfully deactivated."
+                ),
                 deactivated,
             )
             % deactivated,

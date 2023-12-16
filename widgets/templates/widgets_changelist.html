@@ -1,13 +1,10 @@
 {% extends 'admin/change_list.html' %}
 {% block object-tools %}
     <div>
-        <form action="activate/" method="post" style="display: inline;">
+        <form method="post">
             {% csrf_token %}
-            <input type="submit" value="Activate All">
-        </form>
-        <form action="deactivate/" method="post" style="display: inline;">
-            {% csrf_token %}
-            <input type="submit" value="Deactivate All">
+            <input type="submit" formaction="activate/" value="Activate All Widgets">
+            <input type="submit" formaction="deactivate/" value="Deactivate All Widgets">
         </form>
     </div>
     <br />

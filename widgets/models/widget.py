@@ -16,7 +16,8 @@ class Widget(models.Model):
     )
     name = models.SlugField(
         blank=False,
-        max_length=64,
+        db_column="name",
+        max_length=32,
         null=False,
         help_text="Name of the widget.",
         validators=[
@@ -32,6 +33,7 @@ class Widget(models.Model):
         verbose_name="Widget Description"
     )
     active = models.BooleanField(
+        db_column="active",
         default=True,
         help_text="Is the widget active and available?",
         verbose_name="Active?"
