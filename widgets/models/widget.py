@@ -49,7 +49,6 @@ class Widget(models.Model):
         verbose_name="E-mail Address"
     )
     template = models.ForeignKey(
-        blank=False,
         db_column="template",
         default=None,
         help_text="E-mail template to be used for for widget notifications.",
