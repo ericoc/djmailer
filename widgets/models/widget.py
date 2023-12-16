@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinLengthValidator, MaxLengthValidator
 from django.db import models
 
+from mailer.models.template import MailerTemplate
+
 
 class Widget(models.Model):
     """
@@ -45,6 +47,17 @@ class Widget(models.Model):
         help_text="E-mail address for widget notifications.",
         null=True,
         verbose_name="E-mail Address"
+    )
+    template = models.ForeignKey(
+        blank=False,
+        db_column="template",
+        default=None,
+        help_text="E-mail template to be used for for widget notifications.",
+        null=True,
+        to=MailerTemplate,
+        to_field="id",
+        on_delete=models.PROTECT,
+        verbose_name="E-mail Template"
     )
     created_at = models.DateTimeField(
         blank=False,

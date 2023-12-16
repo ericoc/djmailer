@@ -16,7 +16,7 @@ class WidgetAdmin(admin.ModelAdmin):
     date_hierarchy = "created_at"
     fieldsets = (
         ("Widget", {"fields": ("name", "description", "active")}),
-        ("Notifications", {"fields": ("email",)}),
+        ("Notifications", {"fields": ("email", "template",)}),
         ("Created", {
             "fields": ("created_at", "created_by"),
             "classes": ("collapse",),
@@ -27,9 +27,10 @@ class WidgetAdmin(admin.ModelAdmin):
         }),
     )
     inlines = (WidgetCommentInlineAdmin,)
-    list_display = ("name", "active", "email",)
+    list_display = ("name", "active", "email", "template",)
     list_filter = (
         "active",
+        "template",
         ("created_by", admin.RelatedOnlyFieldListFilter),
         ("updated_by", admin.RelatedOnlyFieldListFilter)
     )
