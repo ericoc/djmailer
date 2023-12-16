@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.core.validators import MinLengthValidator, MaxLengthValidator
 from django.db import models
-from mailmod.models.templates import EmailTemplate
 
 
 class Widget(models.Model):
@@ -44,13 +43,6 @@ class Widget(models.Model):
         help_text="E-mail address for widget notifications.",
         null=True,
         verbose_name="E-mail Address"
-    )
-    template = models.ForeignKey(
-        to=EmailTemplate,
-        on_delete=models.PROTECT,
-        blank=True,
-        default=None,
-        null=True,
     )
     created_at = models.DateTimeField(
         blank=False,

@@ -1,9 +1,8 @@
-from django.conf import settings
 from django.contrib import admin, messages
+from django.http import HttpResponseRedirect
+from django.urls import path
 from django.utils.timezone import now
 from django.utils.translation import ngettext
-from mailmod import mail
-from mailmod.models import TemplateVariable
 
 from .comment import WidgetCommentInlineAdmin
 from ..models.widget import Widget
@@ -13,10 +12,11 @@ from ..models.widget import Widget
 class WidgetAdmin(admin.ModelAdmin):
     """Widget administration."""
     model = Widget
+    change_list_template = "widgets_changelist.html"
     date_hierarchy = "created_at"
     fieldsets = (
         ("Widget", {"fields": ("name", "description", "active")}),
-        ("Notifications", {"fields": ("email", "template")}),
+        ("Notifications", {"fields": ("email",)}),
         ("Created", {
             "fields": ("created_at", "created_by"),
             "classes": ("collapse",),
@@ -27,15 +27,36 @@ class WidgetAdmin(admin.ModelAdmin):
         }),
     )
     inlines = (WidgetCommentInlineAdmin,)
-    list_display = ("name", "active", "template")
+    list_display = ("name", "active",)
     list_filter = (
         "active",
-        ("template", admin.RelatedOnlyFieldListFilter),
         ("created_by", admin.RelatedOnlyFieldListFilter),
         ("updated_by", admin.RelatedOnlyFieldListFilter)
     )
     search_fields = ("name", "description", "created_by", "updated_by")
     readonly_fields = ("created_at", "created_by", "updated_at", "updated_by")
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('activate/', self.activate_all),
+            path('deactivate/', self.deactivate_all),
+        ]
+        return my_urls + urls
+
+    def activate_all(self, request):
+        self.model.objects.all().update(active=True)
+        self.message_user(request,"All widgets have been activated.")
+        return HttpResponseRedirect("..")
+
+    def deactivate_all(self, request):
+        self.model.objects.all().update(active=False)
+        self.message_user(
+            request,
+            "All widgets have been deactivated.",
+            messages.WARNING
+        )
+        return HttpResponseRedirect("..")
 
     @admin.action(
         description=f"Activate selected {model._meta.verbose_name_plural}"
@@ -62,55 +83,16 @@ class WidgetAdmin(admin.ModelAdmin):
             request,
             ngettext(
                 (f"%d {self.model._meta.verbose_name}"
-                 f" was successfully deactivated."),
+                 " was successfully deactivated."),
                 (f"%d {self.model._meta.verbose_name_plural}"
-                 f" were successfully deactivated."),
+                 " were successfully deactivated."),
                 deactivated,
             )
             % deactivated,
             messages.WARNING,
         )
 
-    @admin.action(
-        description="Queue e-mail of the status of selected %s" % (
-            model._meta.verbose_name_plural
-        )
-    )
-    def mail_status(modeladmin, request, queryset):
-        queued = 0
-        if queryset:
-            for obj in queryset:
-                if obj and obj.active and obj.email and obj.template:
-                    email = mail.create(
-                        sender=settings.DEFAULT_FROM_EMAIL,
-                        recipients=obj.email,
-                        template=obj.template,
-                    )
-                    template_values = (
-                        ("NAME", obj.name),
-                    )
-                    for (template_var, actual_var) in template_values:
-                        TemplateVariable.objects.create(
-                            name=template_var,
-                            value=actual_var,
-                            email=email
-                        )
-                    queued += 1
-
-        messages.add_message(
-            request=request,
-            level=messages.SUCCESS,
-            message=(
-                ngettext(
-                    f"%d e-mail has been queued.",
-                    f"%d e-mails have been queued.",
-                    queued,
-                )
-                % queued
-            )
-        )
-
-    actions = (activate, deactivate, mail_status)
+    actions = (activate, deactivate,)
 
     def save_model(self, request, obj, form, change):
         if change:
