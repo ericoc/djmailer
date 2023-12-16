@@ -30,7 +30,7 @@ class WidgetAdmin(admin.ModelAdmin):
     list_display = ("name", "active", "email", "template",)
     list_filter = (
         "active",
-        "template",
+        ("template", admin.RelatedOnlyFieldListFilter),
         ("created_by", admin.RelatedOnlyFieldListFilter),
         ("updated_by", admin.RelatedOnlyFieldListFilter)
     )
