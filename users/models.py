@@ -151,7 +151,7 @@ class WidgetUser(PermissionsMixin, AbstractBaseUser):
         db_table_comment = "Users."
         default_related_name = "user"
         managed = True
-        ordering = ("id",)
+        ordering = ("username",)
         verbose_name = "User"
 
     def __repr__(self):

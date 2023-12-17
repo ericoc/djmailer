@@ -106,7 +106,7 @@ class Widget(models.Model):
     class Meta:
         db_table = "widgets"
         managed = True
-        ordering = ("-updated_at", "-created_at", "-id",)
+        ordering = ("-id",)
         verbose_name = "Widget"
 
     def __repr__(self):

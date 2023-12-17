@@ -115,7 +115,7 @@ class MailerMessage(models.Model):
     class Meta:
         db_table = "messages"
         managed = True
-        ordering = ("-sent_at", "-created_at", "-id",)
+        ordering = ("-id",)
         verbose_name = "Message"
 
     def __repr__(self):
