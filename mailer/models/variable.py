@@ -1,4 +1,3 @@
-from django.core.validators import MinLengthValidator, MaxLengthValidator
 from django.db import models
 
 
@@ -12,16 +11,11 @@ class MailerVariable(models.Model):
         primary_key=True,
         verbose_name="Name"
     )
-    value = models.CharField(
+    value = models.TextField(
         blank=False,
         db_column="value",
         help_text="Value of the global e-mail template variable.",
-        max_length=64,
         null=False,
-        validators=[
-            MinLengthValidator(limit_value=1),
-            MaxLengthValidator(limit_value=64)
-        ],
         verbose_name="Value"
     )
 
