@@ -73,7 +73,7 @@ class MailerMessageAdmin(admin.ModelAdmin):
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=(obj.recipient,),
                 headers={
-                    "X-Mail-Software": "git@github.com:ericoc/djadmin.git",
+                    "X-Mail-Software": "github.com/ericoc/djadmin",
                 },
             )
             email_msg.content_subtype = "html"
