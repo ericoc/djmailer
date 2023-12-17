@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.validators import MinLengthValidator, MaxLengthValidator
 from django.db import models
 
@@ -36,6 +37,14 @@ class MailerTemplate(models.Model):
         db_column="description",
         help_text="Description of the e-mail template.",
         verbose_name="Template Description"
+    )
+    sender = models.EmailField(
+        blank=False,
+        db_column="sender",
+        default=settings.DEFAULT_FROM_EMAIL,
+        help_text="From address of e-mail message(s) sent using the template.",
+        null=False,
+        verbose_name="Sender E-mail Address"
     )
     subject = models.CharField(
         blank=False,

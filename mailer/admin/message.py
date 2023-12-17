@@ -18,17 +18,23 @@ class MailerMessageAdmin(admin.ModelAdmin):
     date_hierarchy = "created_at"
     fieldsets = (
         (None, {"fields": ("id",)}),
-        ("Contents", {"fields": ("recipient", "subject", "body_html",)}),
+        ("Addresses", {"fields": ("sender", "recipient",)}),
+        ("Contents", {"fields": ("subject", "body_html",)}),
         ("Time", {"fields": ("created_at", "sent_at",)})
     )
-    list_display = ("id", "status", "created_at", "sent_at", "recipient",)
+    list_display = ("id", "status", "created_at", "sent_at", "sender",)
     list_display_links = ("id", "status",)
-    list_filter = ("status",)
-    readonly_fields = (
-        "id", "status", "recipient", "subject", "body", "created_at", "sent_at",
-        "body_html"
+    list_filter = (
+        ("sender", admin.RelatedOnlyFieldListFilter),
+        ("status", admin.RelatedOnlyFieldListFilter),
     )
-    search_fields = ("id", "recipient", "subject", "body",)
+    readonly_fields = (
+        "id", "status", "sender", "recipient", "subject", "body",
+        "created_at", "sent_at", "body_html"
+    )
+    search_fields = (
+        "id", "sender", "recipient", "subject", "body", "body_html"
+    )
 
     def get_urls(self):
         urls = super().get_urls()
@@ -70,11 +76,9 @@ class MailerMessageAdmin(admin.ModelAdmin):
             email_msg = EmailMultiAlternatives(
                 subject=obj.subject,
                 body=obj.body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
+                from_email=obj.sender,
                 to=(obj.recipient,),
-                headers={
-                    "X-Mail-Software": "github.com/ericoc/djadmin",
-                },
+                headers={"X-Mail-Software": "github.com/ericoc/djadmin",},
             )
             email_msg.content_subtype = "html"
             email_msgs = email_msgs + (email_msg,)

@@ -2,6 +2,7 @@ from django.core.validators import MinLengthValidator, MaxLengthValidator
 from django.db import models
 from django.template import Context, Template
 
+import settings
 from ..models.variable import MailerVariable
 
 
@@ -38,12 +39,20 @@ class MailerMessage(models.Model):
         null=False,
         verbose_name="Message Status"
     )
+    sender = models.EmailField(
+        blank=False,
+        db_column="sender",
+        default=settings.DEFAULT_FROM_EMAIL,
+        help_text="E-mail address of the sender of the e-mail message.",
+        null=False,
+        verbose_name="Sender E-mail Address"
+    )
     recipient = models.EmailField(
         blank=False,
         db_column="recipient",
         help_text="E-mail address of the recipient of the e-mail message.",
         null=False,
-        verbose_name="E-mail Address"
+        verbose_name="Recipient E-mail Address"
     )
     subject = models.CharField(
         blank=False,
@@ -85,13 +94,18 @@ class MailerMessage(models.Model):
 
     def prepare(self, widget=None):
         if widget:
+            template = widget.template
             self.recipient = widget.email
-            context = {"widget": widget}
+            context = {
+                "widget": widget,
+                "RECIPIENT": widget.email,
+                "SENDER": template.sender
+            }
             for global_variable in MailerVariable.objects.all():
                 context[global_variable.name] = global_variable.value
             context = Context(context)
-            self.subject = Template(widget.template.subject).render(context)
-            self.body = Template(widget.template.body).render(context)
+            self.subject = Template(template.subject).render(context)
+            self.body = Template(template.body).render(context)
 
     class Meta:
         db_table = "messages"

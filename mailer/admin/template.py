@@ -12,13 +12,15 @@ class MailerTemplateAdmin(admin.ModelAdmin):
     """Mailer template administration."""
     model = MailerTemplate
     fieldsets = (
-        ("Template", {"fields": ("name", "description", "active")}),
-        ("Subject", {"fields": ("subject",)}),
-        ("Body", {"fields": ("body",)}),
+        (None, {"fields": ("name", "description", "active")}),
+        ("Message", {"fields": ("sender", "subject", "body",)}),
     )
-    list_display = ("name", "active", "subject",)
-    list_filter = ("active",)
-    search_fields = ("name", "description", "subject", "body",)
+    list_display = ("name", "active", "subject", "sender",)
+    list_filter = (
+        ("active", admin.RelatedOnlyFieldListFilter),
+        ("sender", admin.RelatedOnlyFieldListFilter),
+    )
+    search_fields = ("name", "description", "sender", "subject", "body",)
 
     def get_urls(self):
         urls = super().get_urls()
