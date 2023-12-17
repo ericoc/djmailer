@@ -1,8 +1,7 @@
 from django.contrib import admin, messages
-from django.conf import settings
 from django.core.mail import get_connection, EmailMultiAlternatives
-from django.http import HttpResponseRedirect
-from django.urls import path
+from django.http import HttpResponse, HttpResponseRedirect
+from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils.timezone import now
 from django.utils.translation import ngettext
@@ -19,19 +18,43 @@ class MailerMessageAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {"fields": ("id",)}),
         ("Addresses", {"fields": ("sender", "recipient",)}),
-        ("Contents", {"fields": ("subject", "body_html",)}),
+        ("Contents", {"fields": ("subject", "view_message_field")}),
         ("Time", {"fields": ("created_at", "sent_at",)})
     )
     list_display = ("id", "status", "created_at", "sent_at",)
     list_display_links = ("id", "status",)
     list_filter = ("sender", "status",)
     readonly_fields = (
-        "id", "status", "sender", "recipient", "subject", "body",
-        "created_at", "sent_at", "body_html"
+        "id", "status",
+        "sender", "recipient",
+        "subject",  "body", "view_message_field",
+        "created_at", "sent_at"
     )
     search_fields = (
         "id", "sender", "recipient", "subject", "body", "body_html"
     )
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        if request.GET.get('view') == "true":
+            return self.view_message_view(request, object_id)
+        return super().change_view(request, object_id, form_url, extra_context)
+
+    @admin.display(description="E-mail Body")
+    def view_message_field(self, obj):
+        return format_html(
+            '<a href="%s" target="_blank">View Message</a>' % (
+                reverse(
+                    viewname="admin:mailer_mailermessage_change",
+                    kwargs={"object_id": obj.pk}
+                ) + "?view=true"
+            )
+        )
+
+    def view_message_view(self, request, obj_id):
+        return HttpResponse(
+            content=self.get_object(request, obj_id).body_html,
+            content_type="text/html"
+        )
 
     def get_urls(self):
         urls = super().get_urls()
@@ -67,10 +90,6 @@ class MailerMessageAdmin(admin.ModelAdmin):
             )
         )
         return HttpResponseRedirect("..")
-
-    @admin.display(description="E-mail Body")
-    def body_html(self, obj):
-        return format_html(obj.body)
 
     @admin.action(description="Cancel selected queued Messages")
     def cancel_queued_messages(self, request, queryset):

@@ -3,6 +3,7 @@ from django.core.validators import (
 )
 from django.db import models
 from django.template import Context, Template
+from django.utils.html import format_html
 
 import settings
 from ..models.variable import MailerVariable
@@ -111,6 +112,10 @@ class MailerMessage(models.Model):
             context = Context(context)
             self.subject = Template(template.subject).render(context)
             self.body = Template(template.body).render(context)
+
+    @property
+    def body_html(self):
+        return format_html(self.body)
 
     class Meta:
         db_table = "messages"
