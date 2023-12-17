@@ -1,6 +1,8 @@
 from django.contrib import admin, messages
 from django.conf import settings
 from django.core.mail import get_connection, EmailMultiAlternatives
+from django.http import HttpResponseRedirect
+from django.urls import path
 from django.utils.html import format_html
 from django.utils.timezone import now
 from django.utils.translation import ngettext
@@ -12,6 +14,7 @@ from ..models.message import MailerMessage, MailerMessageStatus
 class MailerMessageAdmin(admin.ModelAdmin):
     """Message administration."""
     model = MailerMessage
+    change_list_template = "message_changelist.html"
     date_hierarchy = "created_at"
     fieldsets = (
         (None, {"fields": ("id",)}),
@@ -27,6 +30,13 @@ class MailerMessageAdmin(admin.ModelAdmin):
     )
     search_fields = ("id", "recipient", "subject", "body",)
 
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('sendall/', self.send_all),
+        ]
+        return my_urls + urls
+
     def has_add_permission(self, request):
         return False
 
@@ -38,13 +48,22 @@ class MailerMessageAdmin(admin.ModelAdmin):
             return False
         return super().has_delete_permission(request, obj)
 
+    def send_all(self, request):
+        self.send_queued_messages(
+            request=request,
+            queryset=self.model.objects.filter(
+                status=MailerMessageStatus.QUEUED
+            )
+        )
+        return HttpResponseRedirect("..")
+
     @admin.display(description="E-mail Body")
     def body_html(self, obj):
         return format_html(obj.body)
 
     @admin.action(description="Send selected Messages")
     def send_queued_messages(self, request, queryset):
-        queued = queryset.filter(status=2)
+        queued = queryset.filter(status=MailerMessageStatus.QUEUED)
         email_msgs = ()
         sent = 0
         for obj in queued:

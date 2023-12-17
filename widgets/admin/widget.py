@@ -45,6 +45,7 @@ class WidgetAdmin(admin.ModelAdmin):
         my_urls = [
             path('activate/', self.activate_all),
             path('deactivate/', self.deactivate_all),
+            path('queueall/', self.queue_all),
         ]
         return my_urls + urls
 
@@ -70,6 +71,10 @@ class WidgetAdmin(admin.ModelAdmin):
             ),
             level=messages.WARNING
         )
+        return HttpResponseRedirect("..")
+
+    def queue_all(self, request):
+        self.queue_mail(request, self.model.objects.filter(active=True))
         return HttpResponseRedirect("..")
 
     @admin.action(
