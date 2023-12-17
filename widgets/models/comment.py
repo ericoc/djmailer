@@ -49,7 +49,7 @@ class WidgetComment(models.Model):
         blank=False,
         db_column="created_by",
         editable=False,
-        null=True,
+        null=False,
         help_text="User who created the widget comment.",
         related_name="+",
         to=get_user_model(),
