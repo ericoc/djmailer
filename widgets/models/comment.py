@@ -22,6 +22,8 @@ class WidgetComment(models.Model):
         editable=False,
         null=False,
         help_text="Widget related to the comment.",
+        related_query_name="comment",
+        related_name="comments",
         to=Widget,
         on_delete=models.PROTECT,
         verbose_name="Widget"
