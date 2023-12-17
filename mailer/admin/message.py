@@ -113,29 +113,28 @@ class MailerMessageAdmin(admin.ModelAdmin):
     @admin.action(description="Send selected queued Messages")
     def send_queued_messages(self, request, queryset):
         queued = queryset.filter(status=MailerMessageStatus.QUEUED)
-        email_msgs = ()
         sent = 0
-        for obj in queued:
-            email_msg = EmailMultiAlternatives(
-                subject=obj.subject,
-                body=obj.body,
-                from_email=obj.sender,
-                to=(obj.recipient,),
-                headers={
-                    "X-Mail-Software": "github.com/ericoc/djadmin",
-                    "X-Mail-Software-ID": obj.id,
-                },
-            )
-            email_msg.content_subtype = "html"
-            email_msgs = email_msgs + (email_msg,)
-
-        if email_msgs:
-            sent = len(email_msgs)
         with get_connection() as connection:
-            connection.send_messages(email_msgs)
+            for obj in queued:
+                email_msg = EmailMultiAlternatives(
+                    subject=obj.subject,
+                    body=obj.body,
+                    from_email=obj.sender,
+                    reply_to=(obj.sender,),
+                    to=(obj.recipient,),
+                    headers={
+                        "X-Mail-Software": "github.com/ericoc/djadmin",
+                        "X-Mail-Software-ID": obj.id,
+                        "X-Mail-Software-Item": obj.__repr__(),
+                    },
+                    connection=connection,
+                )
+                email_msg.content_subtype = "html"
+                if email_msg.send(fail_silently=False):
+                    sent += 1
 
         level = messages.WARNING
-        if email_msgs and len(email_msgs) > 0:
+        if sent > 0:
             queued.update(status=MailerMessageStatus.SENT, sent_at=now())
             level = messages.SUCCESS
 
