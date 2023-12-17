@@ -13,31 +13,60 @@ from ..models.message import MailerMessage, MailerMessageStatus
 class MailerMessageAdmin(admin.ModelAdmin):
     """Message administration."""
     model = MailerMessage
+    change_form_template = "message_changeform.html"
     change_list_template = "message_changelist.html"
     date_hierarchy = "created_at"
     fieldsets = (
-        (None, {"fields": ("id",)}),
+        (None, {"fields": ("status",)}),
         ("Addresses", {"fields": ("sender", "recipient",)}),
         ("Contents", {"fields": ("subject", "view_message_field")}),
         ("Time", {"fields": ("created_at", "sent_at",)})
     )
-    list_display = ("id", "status", "created_at", "sent_at",)
-    list_display_links = ("id", "status",)
+    list_display = ("status", "created_at", "sent_at", "view_message_field")
+    list_display_links = ("status", "created_at", "sent_at",)
     list_filter = ("sender", "status",)
     readonly_fields = (
-        "id", "status",
+        "status",
         "sender", "recipient",
-        "subject",  "body", "view_message_field",
+        "subject", "body", "view_message_field",
         "created_at", "sent_at"
     )
     search_fields = (
-        "id", "sender", "recipient", "subject", "body", "body_html"
+        "sender", "recipient", "subject", "body", "body_html"
     )
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         if request.GET.get('view') == "true":
             return self.view_message_view(request, object_id)
         return super().change_view(request, object_id, form_url, extra_context)
+
+    def get_urls(self):
+        return [
+            path("<int:obj_id>/change/cancel/", self.cancel_queued_message),
+            path("<int:obj_id>/change/send/", self.send_queued_message),
+            path("cancelall/", self.cancel_all),
+            path("sendall/", self.send_all),
+        ] + super().get_urls()
+
+    def cancel_queued_message(self, request, obj_id):
+        self.cancel_queued_messages(
+            request=request,
+            queryset=self.model.objects.filter(
+                id=obj_id,
+                status=MailerMessageStatus.QUEUED
+            )
+        )
+        return HttpResponseRedirect("..")
+
+    def send_queued_message(self, request, obj_id):
+        self.send_queued_messages(
+            request=request,
+            queryset=self.model.objects.filter(
+                id=obj_id,
+                status=MailerMessageStatus.QUEUED
+            )
+        )
+        return HttpResponseRedirect("..")
 
     @admin.display(description="E-mail Body")
     def view_message_field(self, obj):
@@ -51,18 +80,12 @@ class MailerMessageAdmin(admin.ModelAdmin):
         )
 
     def view_message_view(self, request, obj_id):
-        return HttpResponse(
-            content=self.get_object(request, obj_id).body_html,
-            content_type="text/html"
+        obj = self.get_object(request, obj_id)
+        content = (
+            f"<pre>\nFrom: {obj.sender}\nTo: {obj.recipient}\n"
+            f"Subject: {obj.subject}\n</pre><hr>{obj.body_html}\n"
         )
-
-    def get_urls(self):
-        urls = super().get_urls()
-        my_urls = [
-            path('cancelall/', self.cancel_all),
-            path('sendall/', self.send_all),
-        ]
-        return my_urls + urls
+        return HttpResponse(content=content, content_type="text/html")
 
     def has_add_permission(self, request):
         return False
@@ -93,11 +116,12 @@ class MailerMessageAdmin(admin.ModelAdmin):
 
     @admin.action(description="Cancel selected queued Messages")
     def cancel_queued_messages(self, request, queryset):
-        level = messages.WARNING
+        canceled = 0
         queued = queryset.filter(status=MailerMessageStatus.QUEUED)
-        canceled = len(queued)
-        if canceled and canceled > 0:
-            queued.update(status=MailerMessageStatus.CANCELED)
+        canceled = queued.update(status=MailerMessageStatus.CANCELED)
+
+        level = messages.WARNING
+        if canceled > 0:
             level = messages.SUCCESS
 
         self.message_user(
@@ -112,8 +136,9 @@ class MailerMessageAdmin(admin.ModelAdmin):
 
     @admin.action(description="Send selected queued Messages")
     def send_queued_messages(self, request, queryset):
-        queued = queryset.filter(status=MailerMessageStatus.QUEUED)
         sent = 0
+        queued = queryset.filter(status=MailerMessageStatus.QUEUED)
+
         with get_connection() as connection:
             for obj in queued:
                 email_msg = EmailMultiAlternatives(
@@ -131,11 +156,13 @@ class MailerMessageAdmin(admin.ModelAdmin):
                 )
                 email_msg.content_subtype = "html"
                 if email_msg.send(fail_silently=False):
+                    obj.sent_at = now()
+                    obj.status = MailerMessageStatus.SENT
+                    obj.save()
                     sent += 1
 
         level = messages.WARNING
         if sent > 0:
-            queued.update(status=MailerMessageStatus.SENT, sent_at=now())
             level = messages.SUCCESS
 
         self.message_user(

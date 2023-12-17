@@ -107,11 +107,11 @@ class MailerMessage(models.Model):
                 "RECIPIENT": widget.email,
                 "SENDER": template.sender
             }
-            for global_variable in MailerVariable.objects.all():
-                context[global_variable.name] = global_variable.value
             context = Context(context)
-            self.subject = Template(template.subject).render(context)
-            self.body = Template(template.body).render(context)
+            for i in MailerVariable.objects.all():
+                context[i.name] = Template(i.value).render(context=context)
+            self.subject = Template(template.subject).render(context=context)
+            self.body = Template(template.body).render(context=context)
 
     @property
     def body_html(self):

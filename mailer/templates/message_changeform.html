@@ -1,0 +1,12 @@
+{% extends 'admin/change_form.html' %}
+{% block object-tools %}
+    <div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="submit" formaction="send/" value="Send E-mail Message">
+            <input type="submit" formaction="cancel/" value="Cancel E-mail Message">
+        </form>
+    </div>
+    <br />
+    {{ block.super }}
+{% endblock %}

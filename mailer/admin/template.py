@@ -22,8 +22,8 @@ class MailerTemplateAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         extra_urls = [
-            path('activate/', self.activate_all),
-            path('deactivate/', self.deactivate_all),
+            path("activate/", self.activate_all),
+            path("deactivate/", self.deactivate_all),
         ]
         return extra_urls + urls
 

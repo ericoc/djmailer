@@ -53,13 +53,11 @@ class WidgetAdmin(admin.ModelAdmin):
         return qs
 
     def get_urls(self):
-        urls = super().get_urls()
-        my_urls = [
-            path('activate/', self.activate_all),
-            path('deactivate/', self.deactivate_all),
-            path('queueall/', self.queue_all),
-        ]
-        return my_urls + urls
+        return [
+            path("activate/", self.activate_all),
+            path("deactivate/", self.deactivate_all),
+            path("queueall/", self.queue_all),
+        ] + super().get_urls()
 
     def activate_all(self, request):
         self.model.objects.all().update(active=True)

@@ -1,5 +1,4 @@
 from django.contrib import admin
-
 from ..models.variable import MailerVariable
 
 
@@ -7,4 +6,4 @@ from ..models.variable import MailerVariable
 class MailerVariableAdmin(admin.ModelAdmin):
     """Variable administration."""
     model = MailerVariable
-    fields = list_display = search_fields = ("name", "value",)
+    fields = list_display = search_fields = ("name", "value")
