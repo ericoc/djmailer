@@ -9,24 +9,24 @@ from ..models.template import MailerTemplate
 
 @admin.register(MailerTemplate)
 class MailerTemplateAdmin(admin.ModelAdmin):
-    """Widget administration."""
+    """Mailer template administration."""
     model = MailerTemplate
     fieldsets = (
         ("Template", {"fields": ("name", "description", "active")}),
         ("Subject", {"fields": ("subject",)}),
         ("Body", {"fields": ("body",)}),
     )
-    list_display = ("name", "active",)
+    list_display = ("name", "active", "subject",)
     list_filter = ("active",)
     search_fields = ("name", "description", "subject", "body",)
 
     def get_urls(self):
         urls = super().get_urls()
-        my_urls = [
+        extra_urls = [
             path('activate/', self.activate_all),
             path('deactivate/', self.deactivate_all),
         ]
-        return my_urls + urls
+        return extra_urls + urls
 
     def activate_all(self, request):
         self.model.objects.all().update(active=True)

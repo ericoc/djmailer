@@ -53,6 +53,7 @@ class MailerTemplate(models.Model):
         blank=False,
         db_column="body",
         help_text="Body of e-mail message(s) sent using the template.",
+        null=False,
         verbose_name="E-mail Body"
     )
 

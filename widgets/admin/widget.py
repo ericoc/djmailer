@@ -1,4 +1,5 @@
 from django.contrib import admin, messages
+
 from django.http import HttpResponseRedirect
 from django.urls import path
 from django.utils.timezone import now
@@ -6,6 +7,8 @@ from django.utils.translation import ngettext
 
 from .comment import WidgetCommentInlineAdmin
 from ..models.widget import Widget
+
+from mailer.models.message import MailerMessage
 
 
 @admin.register(Widget)
@@ -75,20 +78,18 @@ class WidgetAdmin(admin.ModelAdmin):
     def activate(self, request, queryset):
         activated = queryset.update(active=True)
         self.message_user(
-            request,
-            ngettext(
-                (
-                    f"%d {self.model._meta.verbose_name}"
-                    " was successfully activated."
+            request=request,
+            message=ngettext(
+                singular=(
+                    f"%d {self.model._meta.verbose_name} was activated."
                 ),
-                (
-                    f"%d {self.model._meta.verbose_name_plural}"
-                    " were successfully activated."
+                plural=(
+                    f"%d {self.model._meta.verbose_name_plural} were activated."
                 ),
-                activated,
+                number=activated,
             )
             % activated,
-            messages.SUCCESS,
+            level=messages.SUCCESS,
         )
 
     @admin.action(
@@ -97,23 +98,58 @@ class WidgetAdmin(admin.ModelAdmin):
     def deactivate(self, request, queryset):
         deactivated = queryset.update(active=False)
         self.message_user(
-            request,
-            ngettext(
-                (
+            request=request,
+            message=ngettext(
+                singular=(
                     "%d {self.model._meta.verbose_name}"
                     " was successfully deactivated."
                 ),
-                (
+                plural=(
                     f"%d {self.model._meta.verbose_name_plural}"
                     " were successfully deactivated."
                 ),
-                deactivated,
+                number=deactivated,
             )
             % deactivated,
-            messages.WARNING,
+            level=messages.WARNING,
         )
 
-    actions = (activate, deactivate,)
+    @admin.action(
+        description=(
+            f"Queue e-mail for selected {model._meta.verbose_name_plural}"
+        )
+    )
+    def queue_mail(self, request, queryset):
+        num_queued = 0
+        for obj in queryset:
+            if obj.active and obj.email and obj.template:
+                if obj.template.active:
+                    queue_msg = MailerMessage.objects.create()
+                    queue_msg.prepare(widget=obj)
+                    queue_msg.save()
+                    num_queued += 1
+
+        level = messages.WARNING
+        if num_queued >= 1:
+            level = messages.SUCCESS
+        self.message_user(
+            request=request,
+            message=ngettext(
+                singular=(
+                    f"%d {self.model._meta.verbose_name} e-mail"
+                    " was queued."
+                ),
+                plural=(
+                    f"%d {self.model._meta.verbose_name_plural} e-mails"
+                    " were queued."
+                ),
+                number=num_queued,
+            )
+            % num_queued,
+            level=level,
+        )
+
+    actions = (activate, deactivate, queue_mail,)
 
     def save_model(self, request, obj, form, change):
         if change:
