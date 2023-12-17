@@ -40,13 +40,13 @@ class MailerMessage(models.Model):
         default=MailerMessageStatus.QUEUED,
         help_text="Status of the e-mail message.",
         null=False,
-        verbose_name="Message Status"
+        verbose_name="Status"
     )
     sender = models.EmailField(
         blank=False,
         db_column="sender",
         default=settings.DEFAULT_FROM_EMAIL,
-        help_text="E-mail address of the sender of the e-mail message.",
+        help_text="E-mail address of the sender of the message.",
         null=False,
         validators=(EmailValidator(),),
         verbose_name="Sender E-mail Address"
@@ -54,7 +54,7 @@ class MailerMessage(models.Model):
     recipient = models.EmailField(
         blank=False,
         db_column="recipient",
-        help_text="E-mail address of the recipient of the e-mail message.",
+        help_text="E-mail address of the recipient of the message.",
         null=False,
         validators=(EmailValidator(),),
         verbose_name="Recipient E-mail Address"

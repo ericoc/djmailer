@@ -68,10 +68,10 @@ class MailerMessageAdmin(admin.ModelAdmin):
         )
         return HttpResponseRedirect("..")
 
-    @admin.display(description="E-mail Body")
+    @admin.display(description="Message")
     def view_message_field(self, obj):
         return format_html(
-            '<a href="%s" target="_blank">View Message</a>' % (
+            '<a href="%s" target="_blank">View</a>' % (
                 reverse(
                     viewname="admin:mailer_mailermessage_change",
                     kwargs={"object_id": obj.pk}
@@ -155,7 +155,7 @@ class MailerMessageAdmin(admin.ModelAdmin):
                     connection=connection,
                 )
                 email_msg.content_subtype = "html"
-                if email_msg.send(fail_silently=False):
+                if email_msg.send():
                     obj.sent_at = now()
                     obj.status = MailerMessageStatus.SENT
                     obj.save()
