@@ -1,6 +1,7 @@
 from django.contrib import admin, messages
 from django.core.mail import get_connection, EmailMultiAlternatives
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils.timezone import now
@@ -80,12 +81,12 @@ class MailerMessageAdmin(admin.ModelAdmin):
         )
 
     def view_message_view(self, request, obj_id):
-        obj = self.get_object(request, obj_id)
-        content = (
-            f"<pre>\nFrom: {obj.sender}\nTo: {obj.recipient}\n"
-            f"Subject: {obj.subject}\n</pre><hr>{obj.body_html}\n"
+        return render(
+            request=request,
+            template_name="message_view.html",
+            context={"message": self.get_object(request, obj_id)},
+            content_type="text/html"
         )
-        return HttpResponse(content=content, content_type="text/html")
 
     def has_add_permission(self, request):
         return False
