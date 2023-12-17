@@ -73,8 +73,7 @@ class MailerMessageAdmin(admin.ModelAdmin):
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=(obj.recipient,),
                 headers={
-                    "Reply-to": "djadmin@gaw.sh",
-                    "X-Mailer": "git@github.com:ericoc/djadmin.git",
+                    "X-Mail-Software": "git@github.com:ericoc/djadmin.git",
                 },
             )
             email_msg.content_subtype = "html"
