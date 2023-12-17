@@ -1,5 +1,5 @@
 from django.contrib import admin, messages
-
+from django.db.models import Count
 from django.http import HttpResponseRedirect
 from django.urls import path
 from django.utils.timezone import now
@@ -30,7 +30,7 @@ class WidgetAdmin(admin.ModelAdmin):
         }),
     )
     inlines = (WidgetCommentInlineAdmin,)
-    list_display = ("name", "active", "email", "template",)
+    list_display = ("name", "active", "email", "template", "comment_count")
     list_filter = (
         "active",
         ("template", admin.RelatedOnlyFieldListFilter),
@@ -38,7 +38,19 @@ class WidgetAdmin(admin.ModelAdmin):
         ("updated_by", admin.RelatedOnlyFieldListFilter)
     )
     search_fields = ("name", "description", "email", "created_by", "updated_by")
-    readonly_fields = ("created_at", "created_by", "updated_at", "updated_by")
+    readonly_fields = (
+        "comment_count",
+        "created_at", "created_by", "updated_at", "updated_by"
+    )
+
+    @admin.display(description="# Comments", ordering="comment_count")
+    def comment_count(self, obj) -> int:
+        return obj.comment_count
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.annotate(comment_count=Count("comment"))
+        return qs
 
     def get_urls(self):
         urls = super().get_urls()
