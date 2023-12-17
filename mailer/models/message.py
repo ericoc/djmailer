@@ -1,4 +1,6 @@
-from django.core.validators import MinLengthValidator, MaxLengthValidator
+from django.core.validators import (
+    EmailValidator, MinLengthValidator, MaxLengthValidator
+)
 from django.db import models
 from django.template import Context, Template
 
@@ -10,6 +12,7 @@ class MailerMessageStatus(models.IntegerChoices):
     SENT = 0
     FAILED = 1
     QUEUED = 2
+    CANCELED = 3
 
     def __repr__(self):
         return f"{self.__class__.__name__}: {self.__str__()} ({self.value})"
@@ -22,7 +25,6 @@ class MailerMessage(models.Model):
     """
     Mailer Message.
     """
-
     id = models.AutoField(
         db_column="id",
         editable=False,
@@ -45,6 +47,7 @@ class MailerMessage(models.Model):
         default=settings.DEFAULT_FROM_EMAIL,
         help_text="E-mail address of the sender of the e-mail message.",
         null=False,
+        validators=(EmailValidator(),),
         verbose_name="Sender E-mail Address"
     )
     recipient = models.EmailField(
@@ -52,6 +55,7 @@ class MailerMessage(models.Model):
         db_column="recipient",
         help_text="E-mail address of the recipient of the e-mail message.",
         null=False,
+        validators=(EmailValidator(),),
         verbose_name="Recipient E-mail Address"
     )
     subject = models.CharField(
@@ -95,6 +99,7 @@ class MailerMessage(models.Model):
     def prepare(self, widget=None):
         if widget:
             template = widget.template
+            self.sender = template.sender
             self.recipient = widget.email
             context = {
                 "widget": widget,
@@ -110,6 +115,7 @@ class MailerMessage(models.Model):
     class Meta:
         db_table = "messages"
         managed = True
+        ordering = ("-sent_at", "-created_at", "-id",)
         verbose_name = "Message"
 
     def __repr__(self):

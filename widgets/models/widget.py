@@ -1,5 +1,7 @@
 from django.contrib.auth import get_user_model
-from django.core.validators import MinLengthValidator, MaxLengthValidator
+from django.core.validators import (
+    EmailValidator, MinLengthValidator, MaxLengthValidator
+)
 from django.db import models
 
 from mailer.models.template import MailerTemplate
@@ -46,6 +48,7 @@ class Widget(models.Model):
         default=None,
         help_text="E-mail address for widget notifications.",
         null=True,
+        validators=(EmailValidator(),),
         verbose_name="E-mail Address"
     )
     template = models.ForeignKey(
@@ -103,6 +106,7 @@ class Widget(models.Model):
     class Meta:
         db_table = "widgets"
         managed = True
+        ordering = ("-updated_at", "-created_at", "-id",)
         verbose_name = "Widget"
 
     def __repr__(self):

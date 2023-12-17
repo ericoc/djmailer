@@ -68,6 +68,7 @@ class WidgetComment(models.Model):
         db_table = "widget_comments"
         default_related_name = "comment"
         managed = True
+        ordering = ("-updated_at", "-created_at", "-id",)
         unique_together = (("created_by", "widget"),)
         verbose_name = "Comment"
 

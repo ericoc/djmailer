@@ -28,6 +28,7 @@ class MailerVariable(models.Model):
     class Meta:
         db_table = "variables"
         managed = True
+        ordering = ("name",)
         verbose_name = "Variable"
 
     def __repr__(self):

@@ -22,12 +22,9 @@ class MailerMessageAdmin(admin.ModelAdmin):
         ("Contents", {"fields": ("subject", "body_html",)}),
         ("Time", {"fields": ("created_at", "sent_at",)})
     )
-    list_display = ("id", "status", "created_at", "sent_at", "sender",)
+    list_display = ("id", "status", "created_at", "sent_at",)
     list_display_links = ("id", "status",)
-    list_filter = (
-        ("sender", admin.RelatedOnlyFieldListFilter),
-        ("status", admin.RelatedOnlyFieldListFilter),
-    )
+    list_filter = ("sender", "status",)
     readonly_fields = (
         "id", "status", "sender", "recipient", "subject", "body",
         "created_at", "sent_at", "body_html"
@@ -39,6 +36,7 @@ class MailerMessageAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
+            path('cancelall/', self.cancel_all),
             path('sendall/', self.send_all),
         ]
         return my_urls + urls
@@ -50,9 +48,16 @@ class MailerMessageAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        if obj and obj.status == MailerMessageStatus.SENT:
-            return False
-        return super().has_delete_permission(request, obj)
+        return False
+
+    def cancel_all(self, request):
+        self.cancel_queued_messages(
+            request=request,
+            queryset=self.model.objects.filter(
+                status=MailerMessageStatus.QUEUED
+            )
+        )
+        return HttpResponseRedirect("..")
 
     def send_all(self, request):
         self.send_queued_messages(
@@ -67,7 +72,26 @@ class MailerMessageAdmin(admin.ModelAdmin):
     def body_html(self, obj):
         return format_html(obj.body)
 
-    @admin.action(description="Send selected Messages")
+    @admin.action(description="Cancel selected queued Messages")
+    def cancel_queued_messages(self, request, queryset):
+        level = messages.WARNING
+        queued = queryset.filter(status=MailerMessageStatus.QUEUED)
+        canceled = len(queued)
+        if canceled and canceled > 0:
+            queued.update(status=MailerMessageStatus.CANCELED)
+            level = messages.SUCCESS
+
+        self.message_user(
+            request=request,
+            message=ngettext(
+                singular="%d queued status e-mail was canceled.",
+                plural="%d queued status e-mails were canceled.",
+                number=canceled,
+            ) % canceled,
+            level=level,
+        )
+
+    @admin.action(description="Send selected queued Messages")
     def send_queued_messages(self, request, queryset):
         queued = queryset.filter(status=MailerMessageStatus.QUEUED)
         email_msgs = ()
@@ -78,7 +102,10 @@ class MailerMessageAdmin(admin.ModelAdmin):
                 body=obj.body,
                 from_email=obj.sender,
                 to=(obj.recipient,),
-                headers={"X-Mail-Software": "github.com/ericoc/djadmin",},
+                headers={
+                    "X-Mail-Software": "github.com/ericoc/djadmin",
+                    "X-Mail-Software-ID": obj.id,
+                },
             )
             email_msg.content_subtype = "html"
             email_msgs = email_msgs + (email_msg,)
@@ -90,7 +117,7 @@ class MailerMessageAdmin(admin.ModelAdmin):
 
         level = messages.WARNING
         if email_msgs and len(email_msgs) > 0:
-            queued.update(status=0, sent_at=now())
+            queued.update(status=MailerMessageStatus.SENT, sent_at=now())
             level = messages.SUCCESS
 
         self.message_user(
@@ -103,4 +130,4 @@ class MailerMessageAdmin(admin.ModelAdmin):
             level=level,
         )
 
-    actions = (send_queued_messages,)
+    actions = (cancel_queued_messages, send_queued_messages,)

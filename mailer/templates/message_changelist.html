@@ -4,6 +4,7 @@
         <form method="post">
             {% csrf_token %}
             <input type="submit" formaction="sendall/" value="Send All Queued E-mail Messages">
+            <input type="submit" formaction="cancelall/" value="Cancel All Queued E-mail Messages">
         </form>
     </div>
     <br />

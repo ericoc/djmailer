@@ -16,10 +16,7 @@ class MailerTemplateAdmin(admin.ModelAdmin):
         ("Message", {"fields": ("sender", "subject", "body",)}),
     )
     list_display = ("name", "active", "subject", "sender",)
-    list_filter = (
-        ("active", admin.RelatedOnlyFieldListFilter),
-        ("sender", admin.RelatedOnlyFieldListFilter),
-    )
+    list_filter = ("active", "sender",)
     search_fields = ("name", "description", "sender", "subject", "body",)
 
     def get_urls(self):
