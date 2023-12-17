@@ -1,5 +1,6 @@
 {% extends 'admin/change_form.html' %}
 {% block object-tools %}
+{% if original.get_status_display == "Queued" %}
     <div>
         <form method="post">
             {% csrf_token %}
@@ -8,5 +9,6 @@
         </form>
     </div>
     <br />
+{% endif %}
     {{ block.super }}
 {% endblock %}
