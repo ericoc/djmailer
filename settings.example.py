@@ -65,7 +65,7 @@ AUTH_USER_MODEL = "users.WidgetUser"
 AUTHENTICATION_BACKENDS = ("users.backends.WidgetUserAuthBackend",)
 
 ROOT_URLCONF = 'urls'
-SITE_TITLE = 'DJAdmin'
+SITE_TITLE = 'Widgets'
 
 TEMPLATES = [
     {

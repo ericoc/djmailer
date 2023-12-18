@@ -27,6 +27,11 @@ class WidgetCommentInlineAdmin(admin.TabularInline):
     readonly_fields = ("created_by", "created_at", "updated_at")
     user_commented = False
 
+    def has_add_permission(self, request, obj):
+        if self.user_commented:
+            return False
+        return super().has_add_permission(request, obj)
+
     def has_change_permission(self, request, obj=None):
         if obj and obj.created_by == request.user:
             self.user_commented = True

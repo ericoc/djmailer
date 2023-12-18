@@ -72,7 +72,7 @@ class MailerMessageAdmin(admin.ModelAdmin):
     @admin.display(description="Message")
     def view_message_field(self, obj):
         return format_html(
-            '<a href="%s" target="_blank">View</a>' % (
+            '<a href="%s">View Message</a>' % (
                 reverse(
                     viewname="admin:mailer_mailermessage_change",
                     kwargs={"object_id": obj.pk}
@@ -83,9 +83,12 @@ class MailerMessageAdmin(admin.ModelAdmin):
     def view_message_view(self, request, obj_id):
         return render(
             request=request,
-            template_name="message_view.html",
-            context={"message": self.get_object(request, obj_id)},
-            content_type="text/html"
+            template_name="message_viewer.html",
+            context={
+                "message": self.get_object(request, obj_id),
+                "opts": self.model._meta
+            },
+            content_type="text/html",
         )
 
     def has_add_permission(self, request):
