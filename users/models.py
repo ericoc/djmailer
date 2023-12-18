@@ -23,6 +23,7 @@ class WidgetGroup(Group):
     def __str__(self):
         return self.name
 
+
 class UserManager(BaseUserManager):
     """
     User Manager.
