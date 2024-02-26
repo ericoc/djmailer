@@ -88,7 +88,7 @@ class MailerMessageAdmin(admin.ModelAdmin):
         if obj.status == MailerMessageStatus.QUEUED:
             link_text = "Preview"
         return format_html(
-            '<a href="%s">%s Message</a>' % (
+            '<a href="%s">%s</a>' % (
                 reverse(
                     viewname="admin:mailer_mailermessage_change",
                     kwargs={"object_id": obj.pk}
