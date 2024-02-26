@@ -34,13 +34,11 @@ class MailerMessageAdmin(admin.ModelAdmin):
     )
     list_display_links = ("status", "created_at", "sent_at",)
     list_filter = (
-        "from_address", "reply_to_address", "created_at", "sent_at", "status"
+        "from_email", "reply_to_email", "created_at", "sent_at", "status"
     )
     readonly_fields = (
-        "status",
-        "from_address", "reply_to_address", "to_address",
-        "subject", "body", "view_message_field",
-        "created_at", "sent_at"
+        "status", "from_address", "reply_to_address", "to_address",
+        "subject", "body", "view_message_field", "created_at", "sent_at"
     )
     save_as = True
     save_on_top = True
@@ -168,17 +166,13 @@ class MailerMessageAdmin(admin.ModelAdmin):
 
         with get_connection() as connection:
             for obj in queued:
-                cc_addresses = []
-                if obj.recipient:
-                    for cc in obj.recipient.all():
-                        cc_addresses.append(cc.email)
                 email_msg = EmailMultiAlternatives(
                     subject=obj.subject,
                     body=obj.body,
                     from_email=obj.from_address,
                     reply_to=(obj.reply_to_address,),
                     to=(obj.to_address,),
-                    cc=cc_addresses,
+                    cc=obj.cc_addresses,
                     headers={
                         "X-Mail-Software": "github.com/ericoc/djadmin",
                         "X-Mail-Software-ID": obj.id,

@@ -23,13 +23,22 @@
         <div>
             <p>
                 <b>From</b>: <code>{{ message.from_address }}</code><br>
-                <b>Reply-To</b>: <code>{{ message.reply_to_address }}</code><br>
+                <b>Reply-To</b>: <code>{{ message.reply_to_address }}</code>
+            </p>
+            <p>
+                <b>To</b>:
+                <code>{{ message.to_address }}</code>
                 <br>
-                <b>To</b>: <code>{{ message.to_address }}</code><br>
     {% if message.recipient and message.recipient.count > 0 %}
-                    <b>Cc</b>: <code>{{ message.recipient.all|join:", " }}</code><br>
+                <b>Cc</b>:
+        {% for recipient in message.recipient.all %}
+                <code>{{ recipient }}</code>{% if not forloop.last %}, {% endif %}
+        {% endfor %}
     {% endif %}
-                <b>Subject</b>: {{ message.subject }}<br>
+            </p>
+            <p>
+                <b>Subject</b>:
+                {{ message.subject }}
             </p>
         </div>
         <br><hr><br>

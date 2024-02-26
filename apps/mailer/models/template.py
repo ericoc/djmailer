@@ -41,9 +41,9 @@ class MailerTemplate(models.Model):
         help_text=_("Description of the e-mail template."),
         verbose_name=_("Template Description")
     )
-    from_address = models.EmailField(
+    from_email = models.EmailField(
         blank=False,
-        db_column="from_address",
+        db_column="from_email",
         default=settings.DEFAULT_FROM_EMAIL,
         help_text=_(
             "From address of e-mail message(s) sent using the template."
@@ -52,16 +52,42 @@ class MailerTemplate(models.Model):
         validators=(EmailValidator(),),
         verbose_name=_("Sender E-mail Address")
     )
-    reply_to_address = models.EmailField(
+    from_name = models.CharField(
+        blank=True,
+        db_column="from_name",
+        max_length=32,
+        null=True,
+        help_text=_("From name of e-mail message(s) sent using the template."),
+        validators=(
+            MinLengthValidator(limit_value=1),
+            MaxLengthValidator(limit_value=32)
+        ),
+        verbose_name=_("From Name")
+    )
+    reply_to_email = models.EmailField(
         blank=False,
-        db_column="reply_to_address",
+        db_column="reply_to_email",
         default=settings.DEFAULT_FROM_EMAIL,
         help_text=_(
-            "Reply-to address of e-mail message(s) sent using the template."
+            "Reply-To e-mail address of message(s) sent using the template."
         ),
         null=False,
         validators=(EmailValidator(),),
-        verbose_name=_("Reply-to E-mail Address")
+        verbose_name=_("Reply-To E-mail Address")
+    )
+    reply_to_name = models.CharField(
+        blank=True,
+        db_column="reply_to_name",
+        max_length=32,
+        null=True,
+        help_text=_(
+            "Reply-To e-mail name of message(s) sent using the template."
+        ),
+        validators=(
+            MinLengthValidator(limit_value=1),
+            MaxLengthValidator(limit_value=32)
+        ),
+        verbose_name=_("Reply-To Name")
     )
     subject = models.CharField(
         blank=False,
@@ -99,3 +125,11 @@ class MailerTemplate(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def from_address(self):
+        return "%s <%s>" % (self.from_name, self.from_email)
+
+    @property
+    def reply_to_address(self):
+        return "%s <%s>" % (self.reply_to_name, self.reply_to_email)

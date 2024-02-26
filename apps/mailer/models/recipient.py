@@ -1,4 +1,6 @@
-from django.core.validators import EmailValidator
+from django.core.validators import (
+    EmailValidator, MinLengthValidator, MaxLengthValidator
+)
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -24,9 +26,23 @@ class MailerRecipient(models.Model):
         validators=(EmailValidator(),),
         verbose_name=_("Recipient E-mail Address")
     )
+    name = models.CharField(
+        blank=True,
+        db_column="name",
+        default=None,
+        max_length=32,
+        null=True,
+        help_text=_("Recipient Name"),
+        validators=(
+            MinLengthValidator(limit_value=1),
+            MaxLengthValidator(limit_value=32)
+        ),
+        verbose_name=_("Recipient Name")
+    )
     message = models.ForeignKey(
+        blank=False,
         db_column="message",
-        help_text=_("E-mail message related to the recipient."),
+        help_text=_("Message related to the recipient."),
         null=False,
         to=MailerMessage,
         to_field="id",
@@ -50,4 +66,4 @@ class MailerRecipient(models.Model):
         )
 
     def __str__(self):
-        return self.email
+        return "%s <%s>" % (self.email, self.name)

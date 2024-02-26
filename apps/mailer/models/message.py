@@ -31,31 +31,67 @@ class MailerMessage(models.Model):
         null=False,
         verbose_name=_("Status")
     )
-    from_address = models.EmailField(
+    from_email = models.EmailField(
         blank=False,
-        db_column="from_address",
+        db_column="from_email",
         default=settings.DEFAULT_FROM_EMAIL,
         help_text=_('Sender ("From") e-mail address of the message.'),
         null=False,
         validators=(EmailValidator(),),
         verbose_name=_("From E-mail Address")
     )
-    reply_to_address = models.EmailField(
+    from_name = models.CharField(
+        blank=True,
+        db_column="from_name",
+        max_length=32,
+        null=True,
+        help_text=_('Sender name in the e-mail "From" address.'),
+        validators=(
+            MinLengthValidator(limit_value=1),
+            MaxLengthValidator(limit_value=32)
+        ),
+        verbose_name=_("From Name")
+    )
+    reply_to_email = models.EmailField(
         blank=False,
-        db_column="reply_to_address",
+        db_column="reply_to_email",
         default=settings.DEFAULT_FROM_EMAIL,
         help_text=_('"Reply-To" e-mail address of the message.'),
         null=False,
         validators=(EmailValidator(),),
         verbose_name=_("Reply-To E-mail Address")
     )
-    to_address = models.EmailField(
+    reply_to_name = models.CharField(
+        blank=True,
+        db_column="reply_to_name",
+        max_length=32,
+        null=True,
+        help_text=_('Reply-To name of the message.'),
+        validators=(
+            MinLengthValidator(limit_value=1),
+            MaxLengthValidator(limit_value=32)
+        ),
+        verbose_name=_("From Name")
+    )
+    to_email = models.EmailField(
         blank=False,
-        db_column="to_address",
+        db_column="to_email",
         help_text=_('Primary ("To") recipient e-mail address of the message.'),
         null=False,
         validators=(EmailValidator(),),
         verbose_name=_("Recipient E-mail Address")
+    )
+    to_name = models.CharField(
+        blank=True,
+        db_column="to_name",
+        max_length=32,
+        null=True,
+        help_text=_('Recipient name in the e-mail "To" address.'),
+        validators=(
+            MinLengthValidator(limit_value=1),
+            MaxLengthValidator(limit_value=32)
+        ),
+        verbose_name=_("Recipient Name")
     )
     subject = models.CharField(
         blank=False,
@@ -112,36 +148,67 @@ class MailerMessage(models.Model):
     def __str__(self):
         return "%s <%s> @ %s" % (
             self.subject,
-            self.to_address,
+            self.to_email,
             self.created_at.strftime("%c %Z")
         )
 
     def prepare(self, widget=None):
 
-        if widget and widget.template:
-            template = widget.template
+        template = widget.template
+        self.from_email = template.from_email
+        self.from_name = template.from_name
+        self.reply_to_email = template.reply_to_email
+        self.reply_to_name = template.reply_to_name
 
-            to_address = widget.email
-            self.to_address = to_address
+        self.to_email = widget.email
+        self.to_name = widget.name
 
-            from_address = template.from_address
-            self.from_address = from_address
-
-            reply_to_address = template.reply_to_address
-            self.reply_to_address = reply_to_address
-
-            context = {
+        context = Context(
+            {
                 "WIDGET": widget,
-                "TO_ADDRESS": to_address,
-                "FROM_ADDRESS": from_address,
-                "REPLY_TO_ADDRESS": reply_to_address,
+
+                "TO_ADDRESS": self.to_address,
+                "TO_EMAIL": self.to_email,
+                "TO_NAME": self.to_name,
+
+                "FROM_ADDRESS": self.from_address,
+                "FROM_EMAIL": self.from_email,
+                "FROM_NAME": self.from_name,
+
+                "REPLY_TO_ADDRESS": self.reply_to_address,
+                "REPLY_TO_EMAIL": self.reply_to_email,
+                "REPLY_TO_NAME": self.reply_to_name,
             }
-            context = Context(context)
-            for i in MailerVariable.objects.all():
-                context[i.name] = Template(i.value).render(context=context)
-            self.subject = Template(template.subject).render(context=context)
-            self.body = Template(template.body).render(context=context)
+        )
+        for item in MailerVariable.objects.all():
+            context[item.name] = Template(item.value).render(context=context)
+
+        self.subject = Template(template.subject).render(context=context)
+        self.body = Template(template.body).render(context=context)
 
     @property
     def body_html(self):
         return format_html(self.body)
+
+    @property
+    def from_address(self):
+        return "%s <%s>" % (self.from_name, self.from_email)
+
+    @property
+    def reply_to_address(self):
+        return "%s <%s>" % (self.reply_to_name, self.reply_to_email)
+
+    @property
+    def to_address(self):
+        return "%s <%s>" % (self.to_name, self.to_email)
+
+    @property
+    def cc_addresses(self) -> list:
+        cc_addresses = []
+        if self.recipient:
+            for cc in self.recipient.all():
+                if cc.name:
+                    cc_addresses.append("%s <%s>" % (cc.name, cc.email))
+                else:
+                    cc_addresses.append(cc.email)
+        return cc_addresses

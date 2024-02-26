@@ -13,18 +13,20 @@ class MailerTemplateAdmin(admin.ModelAdmin):
     model = MailerTemplate
     fieldsets = (
         (None, {"fields": ("name", "description", "active")}),
-        ("Addresses", {"fields": ("from_address", "reply_to_address")}),
+        ("Addresses", {"fields": (
+            "from_email", "from_name", "reply_to_email", "reply_to_name"
+        )}),
         ("Message", {"fields": ("subject", "body",)}),
     )
     list_display = (
         "name", "active", "subject", "from_address", "reply_to_address"
     )
-    list_filter = ("active", "from_address", "reply_to_address")
+    list_filter = ("active", "from_email", "reply_to_email")
+    readonly_fields = ("from_address", "reply_to_address")
     save_as = True
     save_on_top = True
     search_fields = (
-        "name", "description", "from_address", "reply_to_address",
-        "subject", "body"
+        "name", "description", "from_email", "reply_to_email", "subject", "body"
     )
     show_facets = admin.ShowFacets.ALWAYS
     show_full_result_count = True
