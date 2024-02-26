@@ -29,10 +29,10 @@
                 <b>To</b>:
                 <code>{{ message.to_address }}</code>
                 <br>
-    {% if message.recipient and message.recipient.count > 0 %}
-                <b>Cc</b>:
-        {% for recipient in message.recipient.all %}
-                <code>{{ recipient }}</code>{% if not forloop.last %}, {% endif %}
+    {% if message.cc_addresses %}
+                <b>CC</b>:
+        {% for cc_address in message.cc_addresses %}
+                <code>{{ cc_address }}</code>{% if not forloop.last %}, {% endif %}
         {% endfor %}
     {% endif %}
             </p>
