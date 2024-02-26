@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.admin import display
 from django.core.validators import (
     EmailValidator, MinLengthValidator, MaxLengthValidator
 )
@@ -127,9 +128,11 @@ class MailerTemplate(models.Model):
         return self.name
 
     @property
+    @display(description="From Address", ordering="from_email")
     def from_address(self):
         return "%s <%s>" % (self.from_name, self.from_email)
 
     @property
+    @display(description="Reply-To Address", ordering="reply_to_email")
     def reply_to_address(self):
         return "%s <%s>" % (self.reply_to_name, self.reply_to_email)

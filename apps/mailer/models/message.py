@@ -1,3 +1,4 @@
+from django.contrib.admin import display
 from django.core.validators import (
     EmailValidator, MinLengthValidator, MaxLengthValidator
 )
@@ -191,14 +192,17 @@ class MailerMessage(models.Model):
         return format_html(self.body)
 
     @property
+    @display(description="From", ordering="from_email")
     def from_address(self):
         return "%s <%s>" % (self.from_name, self.from_email)
 
     @property
+    @display(description="Reply-To", ordering="reply_to_email")
     def reply_to_address(self):
         return "%s <%s>" % (self.reply_to_name, self.reply_to_email)
 
     @property
+    @display(description="To", ordering="to_email")
     def to_address(self):
         return "%s <%s>" % (self.to_name, self.to_email)
 
