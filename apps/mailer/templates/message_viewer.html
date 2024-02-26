@@ -26,7 +26,7 @@
                 <b>Reply-To</b>: <code>{{ message.reply_to_address }}</code><br>
                 <br>
                 <b>To</b>: <code>{{ message.to_address }}</code><br>
-    {% if message.recipient %}
+    {% if message.recipient and message.recipient.count > 0 %}
                     <b>Cc</b>: <code>{{ message.recipient.all|join:", " }}</code><br>
     {% endif %}
                 <b>Subject</b>: {{ message.subject }}<br>

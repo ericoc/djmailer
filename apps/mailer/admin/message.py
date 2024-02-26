@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin, messages
 from django.core.mail import get_connection, EmailMultiAlternatives
 from django.http import HttpResponseRedirect
@@ -85,12 +86,16 @@ class MailerMessageAdmin(admin.ModelAdmin):
 
     @admin.display(description="Message")
     def view_message_field(self, obj):
+        link_text = "View"
+        if obj.status == MailerMessageStatus.QUEUED:
+            link_text = "Preview"
         return format_html(
-            '<a href="%s">View Message</a>' % (
+            '<a href="%s">%s Message</a>' % (
                 reverse(
                     viewname="admin:mailer_mailermessage_change",
                     kwargs={"object_id": obj.pk}
-                ) + "?view=true"
+                ) + "?view=true",
+                link_text
             )
         )
 
@@ -114,7 +119,7 @@ class MailerMessageAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        if obj and obj.status == MailerMessageStatus.QUEUED:
+        if settings.DEBUG:
             return True
         return False
 
