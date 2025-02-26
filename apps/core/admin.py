@@ -4,5 +4,6 @@ from django.conf import settings
 
 
 admin.site.unregister(Group)
-admin.site.site_header = admin.site.site_title = settings.SITE_TITLE
-admin.site.index_title = settings.SITE_TITLE
+admin.site.site_header = settings.WEBSITE_TITLE
+admin.site.site_title = settings.WEBSITE_TITLE
+admin.site.index_title = settings.WEBSITE_TITLE
